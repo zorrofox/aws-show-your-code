@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Pod
+spec:
+  nodeSelector:
+    karpenter.sh/capacity-type: spot
+  containers:
+  - name: spark-kubernetes-executor # This will be interpreted as Spark driver container

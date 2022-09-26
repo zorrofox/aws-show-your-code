@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Pod
+spec:
+  nodeSelector:
+    karpenter.sh/capacity-type: on-demand
+  containers:
+  - name: spark-kubernetes-driver # This will be interpreted as Spark driver container
