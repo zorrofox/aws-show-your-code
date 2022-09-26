@@ -1,0 +1,4 @@
+.DS_Store
+*/.DS_Store/
+99-set-env.sh
+*/99-set-env.sh
