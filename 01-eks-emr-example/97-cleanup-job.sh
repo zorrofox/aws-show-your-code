@@ -6,7 +6,7 @@ export AWS_ACCOUNT_ID="$(aws sts get-caller-identity --query Account --output te
 
 export S3blogbucket=s3://emr-eks-spark-${AWS_REGION}-${AWS_ACCOUNT_ID}
 
-aws s3 rm ${S3blogbucket}/eks-emr-spark \
+aws s3 rm ${S3blogbucket}/ \
   --region $AWS_REGION \
   --recursive
 

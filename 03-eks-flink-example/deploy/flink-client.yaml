@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flink
+      component: client
+  template:
+    metadata:
+      labels:
+        app: flink
+        component: client
+    spec:
+      containers:
+        - name: client
+          image: flink:1.16.0-scala_2.12-java8
+          workingDir: /opt/flink
+          command: ["/bin/bash"]
+          stdin: true
+          tty: true

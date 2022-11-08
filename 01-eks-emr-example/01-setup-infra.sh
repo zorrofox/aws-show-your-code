@@ -6,6 +6,7 @@ export AWS_REGION=cn-northwest-1
 eksctl create cluster \
 --name $CLUSTER_NAME \
 --region $AWS_REGION \
+--node-type m6g.xlarge \
 --with-oidc
 
 kubectl create namespace emr
@@ -106,22 +107,59 @@ cat <<EoF > $TEMPOUT
         {
             "Effect": "Allow",
             "Action": [
-                "s3:PutObject",
-                "s3:GetObject",
-                "s3:ListBucket"
+              "s3:PutObject",
+              "s3:GetObject",
+              "s3:ListBucket",
+              "s3:DeleteObject"
             ],
-            "Resource": "*"
+            "Resource": "arn:aws-cn:s3:::emr-eks-spark*"
         },
         {
             "Effect": "Allow",
             "Action": [
-                "logs:PutLogEvents",
-                "logs:CreateLogStream",
-                "logs:DescribeLogGroups",
-                "logs:DescribeLogStreams"
+              "logs:PutLogEvents",
+              "logs:CreateLogStream",
+              "logs:DescribeLogGroups",
+              "logs:DescribeLogStreams",
+              "logs:CreateLogGroup"
+            ],
+            "Resource": "arn:aws-cn:logs:${AWS_REGION}:${AWS_ACCOUNT_ID}:*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "glue:Get*",
+            "glue:BatchCreatePartition",
+            "glue:UpdateTable",
+            "glue:CreateTable",
+            "glue:CreateDatabase",
+            "glue:DeleteTable"
+          ],
+          "Resource": [
+            "arn:aws-cn:glue:${AWS_REGION}:${AWS_ACCOUNT_ID}:catalog",
+            "arn:aws-cn:glue:${AWS_REGION}:${AWS_ACCOUNT_ID}:database/*",
+            "arn:aws-cn:glue:${AWS_REGION}:${AWS_ACCOUNT_ID}:table/*"
+          ]
+        },
+        {
+            "Sid": "DynamoDBLockManager",
+            "Effect": "Allow",
+            "Action": [
+              "dynamodb:DescribeTable",
+              "dynamodb:CreateTable",
+              "dynamodb:Query",
+              "dynamodb:Scan",
+              "dynamodb:PutItem",
+              "dynamodb:UpdateItem",
+              "dynamodb:DeleteItem",
+              "dynamodb:BatchWriteItem",
+              "dynamodb:GetItem",
+              "dynamodb:BatchGetItem"
             ],
             "Resource": [
-                "arn:aws-cn:logs:*:*:*"
+              "arn:aws-cn:dynamodb:${AWS_REGION}:${AWS_ACCOUNT_ID}:table/myIcebergLockTable",
+              "arn:aws-cn:dynamodb:${AWS_REGION}:${AWS_ACCOUNT_ID}:table/myIcebergLockTable/index/*",
+              "arn:aws-cn:dynamodb:${AWS_REGION}:${AWS_ACCOUNT_ID}:table/myHudiLockTable"
             ]
         }
     ]
