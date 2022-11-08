@@ -7,3 +7,4 @@
 03-eks-flink-example/resources/s3-sink
 03-eks-flink-example/resources/flink-java/target/*
 03-eks-flink-example/resources/flink-java/target
+03-eks-flink-example/resources/*.jar
