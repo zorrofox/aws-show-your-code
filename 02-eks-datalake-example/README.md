@@ -1,4 +1,5 @@
 # EMR on EKS
+上一期视频我们展示了如何快速搭建EMR on EKS，那么今天的视频就是在上一期的内容基础之上，看一下如何快速部署数据湖三剑客——Iceberg、Hudi和Delta Lake。
 
 ## 视频
 [![NetFlix on UWP](https://res.cloudinary.com/marcomontalbano/image/upload/v1587315555/video_to_markdown/images/youtube--2qqYywttue4-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://www.bilibili.com/video/BV1V14y1J7qc "Data on EKS")
