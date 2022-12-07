@@ -1,0 +1,199 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: examples-batch
+  namespace: pinot
+data:
+  billing_offline_table_config.json: |-
+    {
+      "tableName": "billing",
+      "segmentsConfig" : {
+        "replication" : "1",
+        "schemaName" : "billing"
+      },
+      "tableIndexConfig" : {
+        "invertedIndexColumns" : [],
+        "loadMode"  : "MMAP"
+      },
+      "tenants" : {},
+      "tableType":"OFFLINE",
+      "metadata": {}
+    }
+
+  billing_schema.json: |-
+    {
+      "metricFieldSpecs": [
+        {
+          "dataType": "DOUBLE",
+          "name": "overdueBalance"
+        },
+        {
+          "dataType": "DOUBLE",
+          "name": "baseUsage"
+        },
+        {
+          "dataType": "DOUBLE",
+          "name": "alternateUsage"
+        },
+        {
+          "dataType": "DOUBLE",
+          "name": "standingCharge"
+        },
+        {
+          "dataType": "DOUBLE",
+          "name": "baseCharge"
+        },
+        {
+          "dataType": "DOUBLE",
+          "name": "alternateCharge"
+        },
+        {
+          "dataType": "DOUBLE",
+          "name": "levy"
+        },
+        {
+          "dataType": "DOUBLE",
+          "name": "tax"
+        },
+        {
+          "dataType": "DOUBLE",
+          "name": "totalNet"
+        },
+        {
+          "dataType": "DOUBLE",
+          "name": "totalToPay"
+        }
+      ],
+      "dimensionFieldSpecs": [
+        {
+          "dataType": "INT",
+          "name": "customerId"
+        },
+        {
+          "dataType": "STRING",
+          "name": "creditHistory"
+        },
+        {
+          "dataType": "STRING",
+          "name": "firstName"
+        },
+        {
+          "dataType": "STRING",
+          "name": "lastName"
+        },
+        {
+          "dataType": "BOOLEAN",
+          "name": "isCarOwner"
+        },
+        {
+          "dataType": "STRING",
+          "name": "city"
+        },    {
+          "dataType": "STRING",
+          "name": "maritalStatus"
+        },
+        {
+          "dataType": "STRING",
+          "name": "buildingType"
+        },
+        {
+          "dataType": "STRING",
+          "name": "missedPayment"
+        },    {
+          "dataType": "STRING",
+          "name": "billingMonth"
+        }
+      ],
+      "schemaName": "billing",
+      "primaryKeyColumns": [
+        "customerId"
+      ]
+    }
+  billing-batch-job-from-s3.yaml: |-
+    executionFrameworkSpec:
+        name: 'standalone'
+        segmentGenerationJobRunnerClassName: 'org.apache.pinot.plugin.ingestion.batch.standalone.SegmentGenerationJobRunner'
+        segmentTarPushJobRunnerClassName: 'org.apache.pinot.plugin.ingestion.batch.standalone.SegmentTarPushJobRunner'
+        segmentUriPushJobRunnerClassName: 'org.apache.pinot.plugin.ingestion.batch.standalone.SegmentUriPushJobRunner'
+    jobType: SegmentCreationAndTarPush
+    inputDirURI: 's3://YOUR-PINOT-BUCKET/pinot-ingestion/batch-input/'
+    outputDirURI: 's3://YOUR-PINOT-BUCKET/pinot-ingestion/batch-output/'
+    overwriteOutput: true
+    pinotFSSpecs:
+        - scheme: s3
+          className: org.apache.pinot.plugin.filesystem.S3PinotFS
+          configs:
+            region: 'YOUR-REGION-CODE'
+    recordReaderSpec:
+        dataFormat: 'csv'
+        className: 'org.apache.pinot.plugin.inputformat.csv.CSVRecordReader'
+        configClassName: 'org.apache.pinot.plugin.inputformat.csv.CSVRecordReaderConfig'
+    tableSpec:
+        tableName: 'billing'
+    pinotClusterSpecs:
+        - controllerURI: 'http://pinot-controller:9000'
+    pushJobSpec:
+        pushAttempts: 2
+        pushRetryIntervalMillis: 1000
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pinot-batch-quickstart-pinot-table-creation
+  namespace: pinot
+spec:
+  template:
+    spec:
+      containers:
+        - name: pinot-add-example-batch-table-json
+          image: apachepinot/pinot:latest
+          args: 
+            - "AddTable"
+            - "-schemaFile"
+            - "/var/pinot/examples/billing_schema.json"
+            - "-tableConfigFile"
+            - "/var/pinot/examples/billing_offline_table_config.json"
+            - "-controllerHost"
+            - "pinot-controller"
+            - "-controllerPort"
+            - "9000"
+            - "-exec"
+          env:
+            - name: JAVA_OPTS
+              value: "-Xms4G -Xmx4G -Dpinot.admin.system.exit=true"
+          volumeMounts:
+            - name: examples
+              mountPath: /var/pinot/examples
+      restartPolicy: OnFailure
+      volumes:
+        - name: examples
+          configMap:
+            name: examples-batch
+  backoffLimit: 100
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pinot-batch-quickstart-load-data-from-s3
+  namespace: pinot
+spec:
+  template:
+    spec:
+      containers:
+        - name: loading-batch-data
+          image: apachepinot/pinot:latest
+          args:
+            - LaunchDataIngestionJob
+            - "-jobSpecFile"
+            - "/var/pinot/examples/billing-batch-job-from-s3.yaml"
+          volumeMounts:
+            - name: examples
+              mountPath: /var/pinot/examples
+      restartPolicy: OnFailure
+      serviceAccount: pinot-sa
+      volumes:
+        - name: examples
+          configMap:
+            name: examples-batch
+  backoffLimit: 3
