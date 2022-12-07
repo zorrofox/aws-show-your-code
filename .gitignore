@@ -8,4 +8,4 @@
 03-eks-flink-example/resources/flink-java/target/*
 03-eks-flink-example/resources/flink-java/target
 03-eks-flink-example/resources/*.jar
-05-eks-trino-exmaple/resources/.key
+05-eks-trino-example/resources/.key
