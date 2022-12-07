@@ -1,6 +1,6 @@
 #! /bin/bash
 
-export CLUSTER_NAME=eks-piont-superset
+export CLUSTER_NAME=eks-trino-example
 export AWS_REGION=cn-northwest-1
 
 eksctl delete cluster \
